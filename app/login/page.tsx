@@ -1,19 +1,15 @@
-import SignInButton from "@/components/SignInButton";
+import LoginForm from "@/components/LoginForm";
 import { L } from "@/lib/labels";
 
-export default function LoginPage({ searchParams }: { searchParams: { error?: string } }) {
+export default function LoginPage() {
   return (
     <main className="center">
-      <div className="card login">
+      <div className="card login narrow" style={{ width: "100%" }}>
         <div className="emoji" style={{ fontSize: "2.2rem" }}>🌿</div>
         <h1>{L.app}</h1>
-        <p className="muted">Masuk dengan akun Google yang sudah didaftarkan tim kami.</p>
-        {searchParams.error && (
-          <p className="banner alert" role="alert">
-            Akun ini belum punya akses. Hubungi admin untuk didaftarkan, lalu coba lagi.
-          </p>
-        )}
-        <SignInButton />
+        <p className="muted">Masuk dengan email dan kata sandi dari tim kami.</p>
+        <LoginForm />
+        <p className="hint" style={{ marginTop: 14 }}>Lupa kata sandi? Hubungi admin untuk dibuatkan yang baru.</p>
       </div>
     </main>
   );

@@ -37,6 +37,12 @@ function mockHandler(action: string, payload: any): unknown {
   switch (action) {
     case "whoami":
       return { allowed: true, name: "Karvien (uji)", role: "Owner" };
+    case "auth.get":
+      return { allowed: true, name: "Karvien (uji)", role: "Owner", hash: "", locked: false };
+    case "auth.fail":
+    case "auth.clear":
+    case "auth.setPassword":
+      return {};
     case "scorecard.get":
       return mockScorecard;
     case "scorecard.weekly":

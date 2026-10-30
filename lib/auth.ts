@@ -1,39 +1,73 @@
 import type { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcryptjs";
 import { callApi } from "./api";
 import type { SessionUser } from "./types";
 
 const devMock = process.env.DEV_MOCK === "1" && process.env.NODE_ENV !== "production";
 
+export const MIN_PASSWORD = 10;
+export const MAX_PASSWORD = 72; // batas bcrypt
+
+type AuthInfo = { allowed: boolean; name: string; role: string; hash: string; locked: boolean };
+
+// Hash tiruan supaya waktu respons tidak membocorkan apakah sebuah email terdaftar.
+let dummyHash: string | null = null;
+const getDummy = () => (dummyHash ??= bcrypt.hashSync("tidak-dipakai-sama-sekali", 12));
+
+/** Memeriksa email + kata sandi. Mengembalikan null untuk SEMUA jenis kegagalan (pesan sengaja seragam). */
+export async function verifyPassword(email: string, password: string): Promise<{ name: string; role: string } | null> {
+  if (!email || !password || password.length > MAX_PASSWORD) return null;
+
+  let info: AuthInfo;
+  try {
+    info = await callApi<AuthInfo>("auth.get", email);
+  } catch {
+    return null;
+  }
+
+  if (info.locked) {
+    await bcrypt.compare(password, getDummy());
+    return null;
+  }
+
+  const ok = await bcrypt.compare(password, info.hash || getDummy());
+  if (!ok || !info.allowed || !info.hash) {
+    await callApi("auth.fail", email).catch(() => undefined);
+    return null;
+  }
+  await callApi("auth.clear", email).catch(() => undefined);
+  return { name: info.name, role: info.role };
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+    CredentialsProvider({
+      name: "Email dan kata sandi",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Kata sandi", type: "password" },
+      },
+      async authorize(credentials) {
+        const email = String(credentials?.email ?? "").trim().toLowerCase();
+        const password = String(credentials?.password ?? "");
+        const who = await verifyPassword(email, password);
+        if (!who) return null;
+        return { id: email, email, name: who.name };
+      },
     }),
   ],
   pages: { signIn: "/login", error: "/login" },
   session: { strategy: "jwt", maxAge: 60 * 60 * 12 },
   callbacks: {
-    // Hanya email yang terdaftar & Aktif di MASTER_USER yang boleh masuk.
-    async signIn({ user, account, profile }) {
-      const email = user.email?.toLowerCase();
-      if (!email) return false;
-      if (account?.provider === "google" && (profile as any)?.email_verified === false) return false;
-      try {
-        const who = await callApi<{ allowed: boolean; name: string; role: string }>("whoami", email);
-        return who.allowed;
-      } catch {
-        return false;
-      }
-    },
     async jwt({ token }) {
-      // Ambil ulang peran tiap sesi baru; kalau pengguna dinonaktifkan, token berhenti berlaku.
-      if (token.email && (!token.role || token.checkedAt === undefined || Date.now() - (token.checkedAt as number) > 5 * 60 * 1000)) {
+      // Cek ulang peran/status tiap beberapa menit; pengguna yang dinonaktifkan ikut terkunci.
+      const stale = token.checkedAt === undefined || Date.now() - (token.checkedAt as number) > 5 * 60 * 1000;
+      if (token.email && stale) {
         try {
           const who = await callApi<{ allowed: boolean; name: string; role: string }>("whoami", String(token.email));
-          if (!who.allowed) return { ...token, role: null, revoked: true };
+          if (!who.allowed) return { ...token, role: null, revoked: true, checkedAt: Date.now() };
           token.role = who.role;
           token.displayName = who.name;
           token.revoked = false;

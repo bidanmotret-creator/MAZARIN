@@ -49,7 +49,7 @@ export default function WeeklyForm({ data }: { data: WeeklyList }) {
       </div>
       {Object.entries(groups).map(([dept, kpis]) => (
         <section className="card block" key={dept}>
-          <h2>{dept}</h2>
+          <h2>{dept.toUpperCase() === "COMPANY" ? "Angka Utama Bisnis" : dept}</h2>
           {kpis.map((k) => (
             <div className="row" key={k.key}>
               <label htmlFor={k.key}>

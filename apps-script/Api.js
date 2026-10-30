@@ -27,6 +27,12 @@ function doPost(e) {
     if (!secretOk_(req.secret)) return json_({ ok: false, code: 'UNAUTHORIZED', message: 'Akses ditolak.' });
 
     var email = String(req.email || '').trim().toLowerCase();
+
+    // --- Pintu login (hanya dipanggil server Vercel; wajib lolos API_SECRET di atas) ---
+    if (req.action === 'auth.get')   return json_({ ok: true, data: authGet_(email) });
+    if (req.action === 'auth.fail')  { authFail_(email);  return json_({ ok: true, data: {} }); }
+    if (req.action === 'auth.clear') { authClear_(email); return json_({ ok: true, data: {} }); }
+
     var user = findActiveUser_(email);
 
     if (req.action === 'whoami') {
@@ -45,6 +51,12 @@ function doPost(e) {
 }
 
 var ROUTES_ = {
+  'auth.setPassword': function (p, user) {
+    var hash = String(p.hash || '');
+    if (!/^\$2[aby]\$\d{2}\$[.\/A-Za-z0-9]{53}$/.test(hash)) throw new Error('Format hash tidak valid.');
+    setPasswordHash_(user.email, hash);
+    return {};
+  },
   'scorecard.get': function () {
     return neutralize_(_toPlain(Scorecard.getWebAppData_()));
   },
@@ -102,4 +114,73 @@ function neutralize_(data) {
     data[k] = s.trim();
   });
   return data;
+}
+
+
+/* ---------- login email + kata sandi ---------- */
+
+var MAX_FAILS_ = 5;          // salah berturut-turut sebelum dikunci
+var LOCK_SECONDS_ = 15 * 60; // lama kunci (dan masa hitung)
+
+function failKey_(email) { return 'authfail:' + email; }
+
+/** Info untuk server Vercel. Hash hanya dikirim ke server (diamankan API_SECRET), tidak pernah ke browser. */
+function authGet_(email) {
+  var out = { allowed: false, name: '', role: '', hash: '', locked: false };
+  if (!email) return out;
+  var count = Number(CacheService.getScriptCache().get(failKey_(email)) || 0);
+  out.locked = count >= MAX_FAILS_;
+  var rows = DB.getAll('MASTER_USER');
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (String(r.Email || '').trim().toLowerCase() !== email) continue;
+    out.allowed = String(r.Status || '').toLowerCase() === 'active';
+    out.name = String(r.Nama || '');
+    out.role = String(r.Role || '');
+    out.hash = String(r.Password_Hash || '');
+    break;
+  }
+  return out;
+}
+
+function authFail_(email) {
+  if (!email) return;
+  var cache = CacheService.getScriptCache();
+  var n = Number(cache.get(failKey_(email)) || 0) + 1;
+  cache.put(failKey_(email), String(n), LOCK_SECONDS_);
+}
+
+function authClear_(email) {
+  if (email) CacheService.getScriptCache().remove(failKey_(email));
+}
+
+/** Menulis hash ke kolom Password_Hash di MASTER_USER (kolom dibuat otomatis bila belum ada). */
+function setPasswordHash_(email, hash) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    var sh = DB.sheet('MASTER_USER');
+    var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+    var cEmail = headers.indexOf('Email');
+    if (cEmail < 0) throw new Error('Kolom Email tidak ada di MASTER_USER.');
+    var cHash = headers.indexOf('Password_Hash');
+    if (cHash < 0) {
+      cHash = headers.length;
+      sh.getRange(1, cHash + 1).setValue('Password_Hash');
+    }
+    var last = sh.getLastRow();
+    if (last < 2) throw new Error('Pengguna tidak ditemukan.');
+    var emails = sh.getRange(2, cEmail + 1, last - 1, 1).getValues();
+    for (var i = 0; i < emails.length; i++) {
+      if (String(emails[i][0] || '').trim().toLowerCase() === email) {
+        sh.getRange(i + 2, cHash + 1).setNumberFormat('@').setValue(hash);
+        SpreadsheetApp.flush();
+        authClear_(email);
+        return;
+      }
+    }
+    throw new Error('Pengguna tidak ditemukan.');
+  } finally {
+    lock.releaseLock();
+  }
 }

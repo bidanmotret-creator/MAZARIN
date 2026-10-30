@@ -8,6 +8,7 @@ export default function Topbar({ user, active }: { user: SessionUser; active?: s
     { href: "/", label: "Beranda", key: "home" },
     { href: "/kartu-skor", label: L.scorecard, key: "scorecard" },
     { href: "/kartu-skor/isi", label: "Isi Angka", key: "input" },
+    { href: "/akun", label: "Akun", key: "account" },
   ];
   return (
     <header className="topbar">

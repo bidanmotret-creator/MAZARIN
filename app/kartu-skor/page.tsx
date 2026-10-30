@@ -6,6 +6,7 @@ import { currentUser } from "@/lib/auth";
 import { callApi } from "@/lib/api";
 import { L } from "@/lib/labels";
 import type { ScorecardData } from "@/lib/types";
+import Istilah from "@/components/Istilah";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ export default async function ScorecardPage() {
     <>
       <Topbar user={user} active="scorecard" />
       <main className="wrap">
-        <h1>{L.scorecard}</h1>
+        <h1><Istilah id="scorecard" ukuran="judul" /></h1>
         {error && <p className="banner alert" role="alert">Data belum bisa dimuat: {error}</p>}
         {data && (
           <>
@@ -56,3 +57,4 @@ export default async function ScorecardPage() {
     </>
   );
 }
+

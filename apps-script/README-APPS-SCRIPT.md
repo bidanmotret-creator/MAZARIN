@@ -15,3 +15,8 @@ Kerjakan di **salinan uji** dulu (bukan spreadsheet klien asli).
 Catatan keamanan: "Anyone" diperlukan agar server Vercel bisa memanggil tanpa login Google.
 Pintunya dikunci oleh `API_SECRET` + pemeriksaan email ke `MASTER_USER` di setiap panggilan.
 Jangan pernah menaruh `API_SECRET` di GitHub atau membagikan tautan `/exec` ke klien.
+
+## Login email + kata sandi
+`Api.js` juga melayani `auth.get / auth.fail / auth.clear / auth.setPassword`. Hash kata sandi disimpan di kolom
+`Password_Hash` sheet `MASTER_USER` (dibuat otomatis). Hash hanya dikirim ke server Vercel, tidak pernah ke browser.
+Penghitung salah-masuk memakai CacheService (best effort; bisa hilang bila cache dibersihkan Google).
