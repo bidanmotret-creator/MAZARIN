@@ -1,11 +1,11 @@
-﻿export type IdIstilah =
+export type IdIstilah =
   | "vto" | "coreValues" | "coreFocus" | "target10" | "gambar3" | "rencana1" | "marketingStrategy"
   | "rocks" | "scorecard" | "level10" | "segue" | "headlines" | "issues" | "ids" | "todo" | "conclude"
   | "accountabilityChart" | "gwc" | "visionary" | "integrator" | "delegateElevate" | "quarterly" | "annual"
   | "cpl" | "roas" | "matchRate" | "closingRate" | "slaCs" | "leadMenggantung" | "repeatOrder"
   | "kodeLeads" | "commentToDm" | "leadMagnet" | "pixelCapi";
 
-// Sumber tunggal istilah + arti pendukung untuk UMKM. Kata "EOS" tidak boleh muncul di sini.
+// Sumber tunggal istilah + arti pendukung untuk UMKM. Hanya istilah MOS yang boleh dipakai di sini.
 export type Entri = {
   istilah: string; // tampil tebal
   arti: string; // satu kalimat, tampil abu-abu di bawah istilah

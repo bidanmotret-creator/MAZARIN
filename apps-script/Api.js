@@ -100,7 +100,7 @@ function findActiveUser_(email) {
 function neutralize_(data) {
   var map = [
     [/🚨\s*/g, ''],
-    [/EOS Rule:\s*Company Scorecard idealnya berisi/g, 'Saran: Kartu Skor utama sebaiknya berisi'],
+    [/Aturan MOS:\s*Company Scorecard idealnya berisi/g, 'Saran: Kartu Skor utama sebaiknya berisi'],
     [/⚠️\s*/g, ''],
     [/ke Issues/g, 'ke Daftar Masalah'],
     [/di IDS minggu ini/g, 'di rapat mingguan ini'],
