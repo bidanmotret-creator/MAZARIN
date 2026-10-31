@@ -3,12 +3,13 @@ import { L } from "@/lib/labels";
 import { MENU } from "@/lib/menu";
 import type { SessionUser } from "@/lib/types";
 import SignOutButton from "./SignOutButton";
+import Logo from "./Logo";
 
 export default function Topbar({ user, active }: { user: SessionUser; active?: string }) {
   return (
     <header className="topbar">
       <div className="in">
-        <Link href="/" className="brand">{L.app}</Link>
+        <Link href="/" className="brand"><Logo ukuran={30} /><span>{L.app}</span></Link>
         <nav aria-label="Menu utama">
           {MENU.map((i) => {
             const cls = [active === i.key ? "on" : "", i.soon ? "soon" : ""].filter(Boolean).join(" ");

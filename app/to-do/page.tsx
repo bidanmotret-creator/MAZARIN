@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import Topbar from "@/components/Topbar";
 import Istilah from "@/components/Istilah";
 import TodoBoard from "@/components/TodoBoard";
+import PanelAnalitik from "@/components/PanelAnalitik";
+import { Hero } from "@/components/Visual";
 import { currentUser } from "@/lib/auth";
 import { callApi } from "@/lib/api";
 import type { WorkData } from "@/lib/types";
@@ -24,9 +26,16 @@ export default async function TodoPage({ searchParams }: { searchParams: { issue
     <>
       <Topbar user={user} active="todo" />
       <main className="wrap">
-        <h1><Istilah id="todo" ukuran="judul" /></h1>
+        <Hero kicker="Mazarin Operational System · Eksekusi" teks="Tugas 7 hari, lengkap dengan penanggung jawab dan tenggat.">
+          <Istilah id="todo" ukuran="judul" />
+        </Hero>
         {error && <p className="banner alert" role="alert">Data belum bisa dimuat: {error}</p>}
-        {data && <TodoBoard data={data} awalIssue={awalIssue} />}
+        {data && (
+          <>
+            <PanelAnalitik data={data} fokus="todo" />
+            <TodoBoard data={data} awalIssue={awalIssue} />
+          </>
+        )}
       </main>
     </>
   );

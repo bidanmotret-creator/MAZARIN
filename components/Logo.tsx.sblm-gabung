@@ -1,0 +1,9 @@
+export default function Logo({ ukuran = 30, className }: { ukuran?: number; className?: string }) {
+  return (
+    <svg className={className} width={ukuran} height={ukuran} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+      <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="3" strokeDasharray="113.7 12" transform="rotate(-43 24 24)" />
+      <path d="M10 36 L17 19 L24 29 L35 5" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="35" cy="5" r="3.2" fill="#1D9E75" />
+    </svg>
+  );
+}

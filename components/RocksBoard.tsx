@@ -2,6 +2,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { RockRow, RocksData } from "@/lib/types";
+import PanelAnalitik from "./PanelAnalitik";
+import { analitikRocks } from "@/lib/analitik";
 
 const DEPARTEMEN = ["Marketing", "Iklan", "Konten", "Penjualan/CS", "Data & Tracking"];
 const SEMUA = "__semua__";
@@ -51,7 +53,6 @@ export default function RocksBoard({ data }: { data: RocksData }) {
   const tampil = data.rocks.filter((r) => kuartal === SEMUA || r.quarter === kuartal);
   const selesai = tampil.filter((r) => r.status === "Done").length;
   const rata = tampil.length ? Math.round(tampil.reduce((a, r) => a + r.progress, 0) / tampil.length) : 0;
-  const perluCek = kuartal !== SEMUA && (tampil.length < 3 || tampil.length > 5);
 
   const ubah = (k: keyof Form, v: string) => setForm((f) => (f ? { ...f, [k]: v } : f));
   const autoForm = !!(form && form.id && data.rocks.find((r) => r.id === form.id)?.auto);
@@ -100,11 +101,7 @@ export default function RocksBoard({ data }: { data: RocksData }) {
         <div className="card tile"><div className="n">{rata}%</div><div className="l">Rata-rata progres</div></div>
       </div>
 
-      {perluCek && (
-        <div className="banner rule" role="status">
-          Aturan MOS: idealnya 3 sampai 5 Rocks per kuartal. Saat ini ada {tampil.length} untuk {kuartal}.
-        </div>
-      )}
+      <PanelAnalitik hasil={analitikRocks(tampil, kuartal === SEMUA ? "semua kuartal" : kuartal)} />
 
       {form && (
         <form className="card block" onSubmit={(e) => { e.preventDefault(); kirim(form); }}>
@@ -156,7 +153,7 @@ export default function RocksBoard({ data }: { data: RocksData }) {
               <div>
                 <div className="judul">{r.name}</div>
                 <div className="muted meta">
-                  {r.owner}{r.department ? ` \u00B7 ${r.department}` : ""} \u00B7 Tenggat {tgl(r.due)} \u00B7 {r.quarter}
+                  {r.owner}{r.department ? ` · ${r.department}` : ""} · Tenggat {tgl(r.due)} · {r.quarter}
                 </div>
               </div>
               <span className={`chip ${r.status === "Done" ? "ok" : telat ? "bad" : "warn"}`}>

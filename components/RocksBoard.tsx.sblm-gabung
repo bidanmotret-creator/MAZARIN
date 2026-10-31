@@ -1,0 +1,184 @@
+"use client";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import type { RockRow, RocksData } from "@/lib/types";
+
+const DEPARTEMEN = ["Marketing", "Iklan", "Konten", "Penjualan/CS", "Data & Tracking"];
+const SEMUA = "__semua__";
+
+type Form = {
+  id: string; name: string; quarter: string; department: string;
+  owner: string; target: string; due: string; progress: string;
+};
+
+function kuartalSaatIni() {
+  const d = new Date();
+  return `Q${Math.floor(d.getMonth() / 3) + 1} ${d.getFullYear()}`;
+}
+function tgl(s: string) {
+  if (!s) return "-";
+  const [y, m, d] = s.split("-").map(Number);
+  return new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(y, m - 1, d));
+}
+function lewat(r: RockRow) {
+  if (r.status === "Done" || !r.due) return false;
+  const [y, m, d] = r.due.split("-").map(Number);
+  const hariIni = new Date();
+  hariIni.setHours(0, 0, 0, 0);
+  return new Date(y, m - 1, d) < hariIni;
+}
+const kosong = (q: string): Form => ({ id: "", name: "", quarter: q, department: "", owner: "", target: "", due: "", progress: "0" });
+const dariRock = (r: RockRow): Form => ({
+  id: r.id, name: r.name, quarter: r.quarter, department: r.department,
+  owner: r.owner, target: r.target, due: r.due, progress: String(r.progress),
+});
+
+export default function RocksBoard({ data }: { data: RocksData }) {
+  const router = useRouter();
+  const awal = data.rocks.length ? data.rocks[data.rocks.length - 1].quarter : kuartalSaatIni();
+  const [kuartal, setKuartal] = useState(awal || SEMUA);
+  const [form, setForm] = useState<Form | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  const daftarKuartal = useMemo(() => {
+    const s = new Set<string>();
+    data.rocks.forEach((r) => r.quarter && s.add(r.quarter));
+    s.add(kuartalSaatIni());
+    return Array.from(s);
+  }, [data.rocks]);
+
+  const tampil = data.rocks.filter((r) => kuartal === SEMUA || r.quarter === kuartal);
+  const selesai = tampil.filter((r) => r.status === "Done").length;
+  const rata = tampil.length ? Math.round(tampil.reduce((a, r) => a + r.progress, 0) / tampil.length) : 0;
+  const perluCek = kuartal !== SEMUA && (tampil.length < 3 || tampil.length > 5);
+
+  const ubah = (k: keyof Form, v: string) => setForm((f) => (f ? { ...f, [k]: v } : f));
+  const autoForm = !!(form && form.id && data.rocks.find((r) => r.id === form.id)?.auto);
+  const namaPemilik = Array.from(new Set(data.owners.concat(form && form.owner ? [form.owner] : [])));
+  const daftarDept = DEPARTEMEN.concat(form && form.department && DEPARTEMEN.indexOf(form.department) < 0 ? [form.department] : []);
+
+  async function kirim(f: Form) {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/rocks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...f, progress: Number(f.progress) }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.message);
+      setMsg({ ok: true, text: json.data.created ? "Rock baru tersimpan." : "Perubahan tersimpan." });
+      setForm(null);
+      router.refresh();
+    } catch (err: any) {
+      setMsg({ ok: false, text: err.message || "Gagal menyimpan." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <>
+      <div className="toolbar">
+        <label className="f">Kuartal
+          <select value={kuartal} onChange={(e) => setKuartal(e.target.value)}>
+            <option value={SEMUA}>Semua kuartal</option>
+            {daftarKuartal.map((q) => <option key={q} value={q}>{q}</option>)}
+          </select>
+        </label>
+        <button type="button" className="btn" onClick={() => { setMsg(null); setForm(kosong(kuartal === SEMUA ? kuartalSaatIni() : kuartal)); }}>
+          + Tambah Rock
+        </button>
+      </div>
+
+      <div className="grid tiles">
+        <div className="card tile"><div className="n">{tampil.length}</div><div className="l">Total Rocks</div></div>
+        <div className="card tile"><div className="n">{selesai}</div><div className="l">Selesai</div></div>
+        <div className="card tile"><div className="n">{tampil.length - selesai}</div><div className="l">Berjalan</div></div>
+        <div className="card tile"><div className="n">{rata}%</div><div className="l">Rata-rata progres</div></div>
+      </div>
+
+      {perluCek && (
+        <div className="banner rule" role="status">
+          Aturan MOS: idealnya 3 sampai 5 Rocks per kuartal. Saat ini ada {tampil.length} untuk {kuartal}.
+        </div>
+      )}
+
+      {form && (
+        <form className="card block" onSubmit={(e) => { e.preventDefault(); kirim(form); }}>
+          <h2>{form.id ? "Ubah Rock" : "Rock baru"}</h2>
+          <div className="formgrid" style={{ marginTop: 12 }}>
+            <label className="f">Nama Rock
+              <input type="text" required maxLength={200} value={form.name} onChange={(e) => ubah("name", e.target.value)} placeholder="Contoh: Balasan chat di bawah 5 menit" />
+            </label>
+            <label className="f">Kuartal
+              <input type="text" required maxLength={40} list="daftar-kuartal" value={form.quarter} onChange={(e) => ubah("quarter", e.target.value)} />
+              <datalist id="daftar-kuartal">{daftarKuartal.map((q) => <option key={q} value={q} />)}</datalist>
+            </label>
+            <label className="f">Penanggung jawab
+              <select required value={form.owner} onChange={(e) => ubah("owner", e.target.value)}>
+                <option value="">Pilih nama...</option>
+                {namaPemilik.map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+            <label className="f">Departemen
+              <select value={form.department} onChange={(e) => ubah("department", e.target.value)}>
+                <option value="">Pilih departemen...</option>
+                {daftarDept.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </label>
+            <label className="f">Tenggat
+              <input type="date" required value={form.due} onChange={(e) => ubah("due", e.target.value)} />
+            </label>
+            <label className="f">Progres (%){autoForm ? " (otomatis dari Issues)" : ""}
+              <input type="number" min={0} max={100} step={1} value={form.progress} disabled={autoForm} onChange={(e) => ubah("progress", e.target.value)} />
+            </label>
+          </div>
+          <label className="f" style={{ marginTop: 12 }}>Target (ukuran berhasil yang jelas)
+            <textarea required rows={3} maxLength={500} value={form.target} onChange={(e) => ubah("target", e.target.value)} placeholder="Contoh: 90% chat dibalas dalam 5 menit selama jam kerja" />
+          </label>
+          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+            <button className="btn" disabled={busy}>{busy ? "Menyimpan..." : "Simpan Rock"}</button>
+            <button type="button" className="btn ghost" onClick={() => setForm(null)}>Batal</button>
+          </div>
+        </form>
+      )}
+
+      {tampil.length === 0 && !form && <div className="empty">Belum ada Rock untuk pilihan ini. Klik &quot;Tambah Rock&quot; untuk mulai.</div>}
+
+      {tampil.map((r) => {
+        const telat = lewat(r);
+        return (
+          <article className="card rock" key={r.id}>
+            <div className="top">
+              <div>
+                <div className="judul">{r.name}</div>
+                <div className="muted meta">
+                  {r.owner}{r.department ? ` · ${r.department}` : ""} · Tenggat {tgl(r.due)} · {r.quarter}
+                </div>
+              </div>
+              <span className={`chip ${r.status === "Done" ? "ok" : telat ? "bad" : "warn"}`}>
+                {r.status === "Done" ? "Selesai" : telat ? "Lewat tenggat" : "Berjalan"}
+              </span>
+            </div>
+            {r.target && <p className="muted">{r.target}</p>}
+            <div className="meter" role="progressbar" aria-valuenow={r.progress} aria-valuemin={0} aria-valuemax={100}>
+              <i style={{ width: `${r.progress}%` }} />
+            </div>
+            <div className="aksi">
+              <span className="muted">{r.progress}%</span>
+              <button type="button" className="btn ghost" onClick={() => { setMsg(null); setForm(dariRock(r)); }}>Ubah</button>
+              {r.status !== "Done" && !r.auto && (
+                <button type="button" className="btn ghost" disabled={busy} onClick={() => kirim({ ...dariRock(r), progress: "100" })}>Tandai selesai</button>
+              )}
+            </div>
+          </article>
+        );
+      })}
+
+      {msg && <div className={`toast ${msg.ok ? "ok" : "err"}`} role="status">{msg.text}</div>}
+    </>
+  );
+}

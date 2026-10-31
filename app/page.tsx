@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Topbar from "@/components/Topbar";
 import Istilah from "@/components/Istilah";
+import { Hero } from "@/components/Visual";
 import { currentUser } from "@/lib/auth";
 import { MENU } from "@/lib/menu";
 
@@ -13,8 +14,9 @@ export default async function Home() {
     <>
       <Topbar user={user} active="home" />
       <main className="wrap">
-        <h1>Halo, {user.name.split(" ")[0]} {"\u{1F44B}"}</h1>
-        <p className="muted">Mau mulai dari mana hari ini?</p>
+        <Hero kicker="Mazarin Operational System" teks="Mau mulai dari mana hari ini?">
+          Halo, {user.name.split(" ")[0]}
+        </Hero>
         <div className="grid menu">
           {kartu.map((m) =>
             !m.soon ? (
