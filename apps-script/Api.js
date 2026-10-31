@@ -51,6 +51,9 @@ function doPost(e) {
 }
 
 var ROUTES_ = {
+  'meeting.workspace': function (p, user) { return meetingWorkspace_(p, user); },
+  'meeting.save': function (p, user) { return meetingSave_(p, user); },
+  'meeting.finish': function (p, user) { return meetingFinish_(p, user); },
   'work.list': function () { return workList_(); },
   'issues.save': function (p, user) { return issuesSave_(p, user); },
   'issues.solve': function (p, user) { return issuesSolve_(p, user); },

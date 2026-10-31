@@ -22,7 +22,7 @@ function workList_() {
     .map(function (r) {
       var label = String(r.Rock_Label || r.Rock_Name || '');
       rockLabel[String(r.Rock_ID)] = label;
-      return { id: String(r.Rock_ID), label: label, done: String(r.Status || '') === 'Done' };
+      return { id: String(r.Rock_ID), label: label, done: String(r.Status || '') === 'Done', progress: Math.max(0, Math.min(100, Math.round(Number(r.Progress) || 0))), owner: String(r.Owner || ''), due: rocksDate_(r.Due_Date), quarter: String(r.Quarter || '') };
     });
 
   var issues = DB.getAll('DB_ISSUES')
@@ -102,7 +102,7 @@ function issuesSave_(p, user) {
       Issue_ID: id, Rock_ID: rock.Rock_ID, Rock_Label: rock.Rock_Label || rock.Rock_Name,
       Issue_Title: title, Issue_Label: label, Description: desc, Department: rock.Department,
       Priority: priority, Owner: owner, Due_Date: due, Progress: 0, Status: 'Open',
-      Root_Cause: cause, Created_Date: new Date()
+      Root_Cause: cause, Created_Date: new Date(), Source_Meeting_ID: String(p.meetingId || '')
     });
     try { LoggerSMOS.add('ISSUE', 'CREATE', title, 'Dibuat dari web oleh ' + user.email); } catch (x) {}
     return { id: id, created: true };
@@ -152,7 +152,7 @@ function todosSave_(p, user) {
     DB.insert('DB_TODO', {
       Todo_ID: id, Rock_ID: issue.Rock_ID, Rock_Label: rock ? (rock.Rock_Label || rock.Rock_Name) : issue.Rock_Label,
       Issue_ID: issue.Issue_ID, Issue_Label: issue.Issue_Label, Task_Name: task, Description: desc,
-      Department: issue.Department, Owner: owner, Due_Date: due, Status: 'Open', Completed_Date: ''
+      Department: issue.Department, Owner: owner, Due_Date: due, Status: 'Open', Completed_Date: '', Source_Meeting_ID: String(p.meetingId || '')
     });
     try { LoggerSMOS.add('TODO', 'CREATE', task, 'Dibuat dari web oleh ' + user.email); } catch (x) {}
     return { id: id, created: true };

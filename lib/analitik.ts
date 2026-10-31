@@ -175,3 +175,49 @@ export function analitikRocks(rocks: RockRow[], kuartal: string): Hasil {
     wawasan: w,
   };
 }
+
+type RiwayatMeeting = { week: number; year: number; rating: number; issues: number; todos: number };
+
+function isoMinggu(d: Date) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const n = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - n);
+  const awal = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return { minggu: Math.ceil(((t.getTime() - awal.getTime()) / 86400000 + 1) / 7), tahun: t.getUTCFullYear() };
+}
+
+export function analitikMeeting(hist: RiwayatMeeting[]) {
+  const urut = [...hist].sort((a, b) => a.year * 100 + a.week - (b.year * 100 + b.week));
+  const bernilai = urut.filter((x) => x.rating > 0);
+  const seri = bernilai.slice(-8).map((x) => ({ label: "M" + x.week, rating: x.rating }));
+  const rata = (a: RiwayatMeeting[]) => (a.length ? Math.round((a.reduce((s, x) => s + x.rating, 0) / a.length) * 10) / 10 : 0);
+  const butir: Wawasan[] = [];
+
+  if (urut.length === 0) {
+    butir.push({ nada: "warn", teks: "Belum ada meeting yang selesai. Rating dan tren muncul setelah meeting pertama ditutup." });
+  } else {
+    const empat = bernilai.slice(-4);
+    if (empat.length > 0) {
+      const r = rata(empat);
+      butir.push({ nada: r >= 8 ? "ok" : r >= 6 ? "warn" : "bad", teks: `Rata-rata rating ${empat.length} meeting terakhir: ${r} dari 10. Target EOS: 8 atau lebih.` });
+    }
+    if (bernilai.length >= 2) {
+      const akhir = bernilai[bernilai.length - 1].rating;
+      const sebelum = bernilai[bernilai.length - 2].rating;
+      if (akhir < sebelum) butir.push({ nada: "warn", teks: `Rating turun dari ${sebelum} ke ${akhir}. Tanyakan apa yang mengganggu jalannya meeting.` });
+      else if (akhir > sebelum) butir.push({ nada: "ok", teks: `Rating naik dari ${sebelum} ke ${akhir}.` });
+    }
+    let ada = 0;
+    const sekarang = Date.now();
+    for (let i = 0; i < 8; i++) {
+      const w = isoMinggu(new Date(sekarang - i * 7 * 86400000));
+      if (urut.some((x) => x.week === w.minggu && x.year === w.tahun)) ada += 1;
+    }
+    butir.push({ nada: ada >= 7 ? "ok" : ada >= 5 ? "warn" : "bad", teks: `${ada} dari 8 minggu terakhir ada meeting yang selesai. Ritme mingguan adalah kuncinya.` });
+    const terakhir = urut[urut.length - 1];
+    if (terakhir.issues + terakhir.todos > 0) {
+      butir.push({ nada: "ok", teks: `Meeting terakhir (minggu ${terakhir.week}) melahirkan ${terakhir.issues} Issue dan ${terakhir.todos} To-Do.` });
+    }
+  }
+  return { butir, seri };
+}

@@ -72,5 +72,18 @@ export type TodoRow = {
   department: string; owner: string; due: string; status: "Open" | "Done"; completed: string;
 };
 export type WorkData = {
-  issues: IssueRow[]; todos: TodoRow[]; rocks: { id: string; label: string; done: boolean }[]; owners: string[];
+  issues: IssueRow[]; todos: TodoRow[]; rocks: { id: string; label: string; done: boolean; progress?: number; owner?: string; due?: string; quarter?: string }[]; owners: string[];
+};
+
+export type MeetingRow = {
+  id: string; week: number; year: number; quarter: string; date: string; facilitator: string; status: string;
+  segue: string; customerHeadlines: string; employeeHeadlines: string; notes: string; decision: string; cascading: string; rating: number;
+};
+export type MeetingHist = { id: string; week: number; year: number; date: string; rating: number; issues: number; todos: number };
+export type MeetingData = {
+  meeting: MeetingRow;
+  scorecard: { onTrack: number; warning: number; offTrack: number; total: number };
+  recap: { issues: number; todos: number };
+  history: MeetingHist[];
+  work: WorkData;
 };
