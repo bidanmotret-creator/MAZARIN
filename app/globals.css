@@ -93,3 +93,6 @@ input:focus-visible, .btn:focus-visible, a:focus-visible { outline: 2px solid va
 .form .btn { justify-content: center; }
 .hint { font-size: .82rem; color: var(--muted); }
 .narrow { max-width: 460px; }
+
+.topbar nav{display:flex;gap:4px;overflow-x:auto;white-space:nowrap;min-width:0;flex:1;scrollbar-width:thin}
+.topbar nav a.soon{opacity:.7}
