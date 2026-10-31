@@ -47,3 +47,17 @@ export type WeeklyList = {
   kpis: WeeklyKpi[];
 };
 export type SessionUser = { email: string; name: string; role: string };
+
+export type RockRow = {
+  id: string;
+  name: string;
+  quarter: string;
+  department: string;
+  target: string;
+  owner: string;
+  start: string;
+  due: string;
+  progress: number;
+  status: "Open" | "Done";
+};
+export type RocksData = { rocks: RockRow[]; owners: string[] };

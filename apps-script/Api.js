@@ -51,6 +51,8 @@ function doPost(e) {
 }
 
 var ROUTES_ = {
+  'rocks.list': function () { return rocksList_(); },
+  'rocks.save': function (p, user) { return rocksSave_(p, user); },
   'auth.setPassword': function (p, user) {
     var hash = String(p.hash || '');
     if (!/^\$2[aby]\$\d{2}\$[.\/A-Za-z0-9]{53}$/.test(hash)) throw new Error('Format hash tidak valid.');
