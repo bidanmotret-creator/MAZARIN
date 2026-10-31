@@ -51,6 +51,11 @@ function doPost(e) {
 }
 
 var ROUTES_ = {
+  'work.list': function () { return workList_(); },
+  'issues.save': function (p, user) { return issuesSave_(p, user); },
+  'issues.solve': function (p, user) { return issuesSolve_(p, user); },
+  'todos.save': function (p, user) { return todosSave_(p, user); },
+  'todos.finish': function (p, user) { return todosFinish_(p, user); },
   'rocks.list': function () { return rocksList_(); },
   'rocks.save': function (p, user) { return rocksSave_(p, user); },
   'auth.setPassword': function (p, user) {

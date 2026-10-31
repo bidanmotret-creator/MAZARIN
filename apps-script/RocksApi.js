@@ -11,6 +11,8 @@ function rocksDate_(v) {
 }
 
 function rocksList_() {
+  var issueRocks = {};
+  DB.getAll('DB_ISSUES').forEach(function (i) { if (i.Rock_ID) issueRocks[String(i.Rock_ID)] = true; });
   var rocks = DB.getAll('DB_ROCKS')
     .filter(function (r) { return String(r.Rock_ID || '') !== ''; })
     .map(function (r) {
@@ -25,7 +27,8 @@ function rocksList_() {
         start: rocksDate_(r.Start_Date),
         due: rocksDate_(r.Due_Date),
         progress: isFinite(prog) ? Math.max(0, Math.min(100, Math.round(prog))) : 0,
-        status: String(r.Status || 'Open') === 'Done' ? 'Done' : 'Open'
+        status: String(r.Status || 'Open') === 'Done' ? 'Done' : 'Open',
+        auto: !!issueRocks[String(r.Rock_ID)]
       };
     });
   var owners = DB.getAll('MASTER_USER')
@@ -62,10 +65,12 @@ function rocksSave_(p, user) {
   try {
     var id = String(p.id || '').trim();
     if (id) {
-      if (!DB.first('DB_ROCKS', 'Rock_ID', id)) throw new Error('Rock tidak ditemukan.');
+      var existing = DB.first('DB_ROCKS', 'Rock_ID', id);
+      if (!existing) throw new Error('Rock tidak ditemukan.');
+      var auto = DB.getAll('DB_ISSUES').some(function (i) { return String(i.Rock_ID) === id; });
       DB.update('DB_ROCKS', 'Rock_ID', id, {
         Rock_Name: name, Rock_Label: label, Quarter: quarter, Department: dept, Target: target,
-        Owner: owner, Due_Date: dueDate, Progress: progress, Status: status
+        Owner: owner, Due_Date: dueDate, Progress: auto ? existing.Progress : progress, Status: auto ? existing.Status : status
       });
       try { LoggerSMOS.add('ROCK', 'UPDATE', name, 'Diubah dari web oleh ' + user.email); } catch (x) {}
       return { id: id, created: false };

@@ -59,5 +59,18 @@ export type RockRow = {
   due: string;
   progress: number;
   status: "Open" | "Done";
+  auto?: boolean;
 };
 export type RocksData = { rocks: RockRow[]; owners: string[] };
+
+export type IssueRow = {
+  id: string; rockId: string; rockLabel: string; title: string; description: string;
+  priority: string; owner: string; due: string; progress: number; status: "Open" | "Done"; rootCause: string;
+};
+export type TodoRow = {
+  id: string; issueId: string; issueLabel: string; rockLabel: string; task: string; description: string;
+  department: string; owner: string; due: string; status: "Open" | "Done"; completed: string;
+};
+export type WorkData = {
+  issues: IssueRow[]; todos: TodoRow[]; rocks: { id: string; label: string; done: boolean }[]; owners: string[];
+};

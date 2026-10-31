@@ -54,6 +54,7 @@ export default function RocksBoard({ data }: { data: RocksData }) {
   const perluCek = kuartal !== SEMUA && (tampil.length < 3 || tampil.length > 5);
 
   const ubah = (k: keyof Form, v: string) => setForm((f) => (f ? { ...f, [k]: v } : f));
+  const autoForm = !!(form && form.id && data.rocks.find((r) => r.id === form.id)?.auto);
   const namaPemilik = Array.from(new Set(data.owners.concat(form && form.owner ? [form.owner] : [])));
   const daftarDept = DEPARTEMEN.concat(form && form.department && DEPARTEMEN.indexOf(form.department) < 0 ? [form.department] : []);
 
@@ -131,8 +132,8 @@ export default function RocksBoard({ data }: { data: RocksData }) {
             <label className="f">Tenggat
               <input type="date" required value={form.due} onChange={(e) => ubah("due", e.target.value)} />
             </label>
-            <label className="f">Progres (%)
-              <input type="number" min={0} max={100} step={1} value={form.progress} onChange={(e) => ubah("progress", e.target.value)} />
+            <label className="f">Progres (%){autoForm ? " (otomatis dari Issues)" : ""}
+              <input type="number" min={0} max={100} step={1} value={form.progress} disabled={autoForm} onChange={(e) => ubah("progress", e.target.value)} />
             </label>
           </div>
           <label className="f" style={{ marginTop: 12 }}>Target (ukuran berhasil yang jelas)
@@ -169,7 +170,7 @@ export default function RocksBoard({ data }: { data: RocksData }) {
             <div className="aksi">
               <span className="muted">{r.progress}%</span>
               <button type="button" className="btn ghost" onClick={() => { setMsg(null); setForm(dariRock(r)); }}>Ubah</button>
-              {r.status !== "Done" && (
+              {r.status !== "Done" && !r.auto && (
                 <button type="button" className="btn ghost" disabled={busy} onClick={() => kirim({ ...dariRock(r), progress: "100" })}>Tandai selesai</button>
               )}
             </div>

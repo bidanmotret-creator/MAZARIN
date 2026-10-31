@@ -24,8 +24,8 @@ export const MENU: MenuItem[] = [
   { key: "meeting", href: "/level-10", label: "Level 10", istilah: "level10", emoji: "\u{1F91D}", text: "Agenda 90 menit, tersimpan rapi.", soon: true, kartu: true },
   { key: "rocks", href: "/rocks", label: "Rocks", istilah: "rocks", emoji: "\u{1F3AF}", text: "Prioritas 90 hari dan progresnya.", kartu: true },
   { key: "vto", href: "/vto", label: "V/TO", istilah: "vto", emoji: "\u{1F9ED}", text: "Tujuan, target, dan janji utama dalam satu halaman.", soon: true, kartu: true },
-  { key: "issues", href: "/issues", label: "Issues", istilah: "issues", emoji: "\u{1F4CC}", text: "Daftar masalah yang perlu dibereskan, dengan cara IDS.", soon: true, kartu: true },
-  { key: "todo", href: "/to-do", label: "To-Do", istilah: "todo", emoji: "\u2705", text: "Tugas 7 hari, lengkap dengan penanggung jawab dan tenggat.", soon: true, kartu: true },
+  { key: "issues", href: "/issues", label: "Issues", istilah: "issues", emoji: "\u{1F4CC}", text: "Daftar masalah yang perlu dibereskan, dengan cara IDS.", kartu: true },
+  { key: "todo", href: "/to-do", label: "To-Do", istilah: "todo", emoji: "\u2705", text: "Tugas 7 hari, lengkap dengan penanggung jawab dan tenggat.", kartu: true },
   { key: "roles", href: "/accountability-chart", label: "Accountability Chart", istilah: "accountabilityChart", emoji: "\u{1F465}", text: "Siapa memegang peran apa, satu peran satu penanggung jawab.", soon: true, kartu: true },
   { key: "account", href: "/akun", label: "Akun" },
 ];
